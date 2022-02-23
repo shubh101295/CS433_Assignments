@@ -56,15 +56,15 @@ int main()
     }
 
     // Solving
-    for (int i = 0; i < n; i++)
+    for (int j = 0; j < n; j++)
     {
-        x[i] = y[i] / L[i][i];
+        x[j] = y[j] / L[j][j];
 
-        for (int j = i + 1; j < n; j++)
+        for (int i = j + 1; i < n; i++)
         {
-            // printf("at column %d\n", i);
+            // printf("at column %d\n", j);
             // printf("y[%d] is now %f\n", j, y[j]);
-            y[j] -= (x[i] * L[j][i]);
+            y[i] -= (x[j] * L[i][j]);
             // printf("y[%d] is now %f\n", j, y[j]);
         }
     }
