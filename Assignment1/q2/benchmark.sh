@@ -1,1 +1,1 @@
-for run in {1..200}; do ./seq_row_trs_simd 2000; done | awk -v N=$2 '{print $3}' | awk '{sum+= $0} END {print sum/NR}'
+for run in {1..400}; do ./par_col_trs 1000 1; done | awk -v N=$2 '{print $3}' | sort | awk ' { a[i++]=$1; } END { print a[int(i/2)]; }'

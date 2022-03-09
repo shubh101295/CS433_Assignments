@@ -7,7 +7,7 @@
 #define SIZE (10)
 
 long double **L, *y, *x;
-int n;
+int n, nthreads;
 
 void InitializeInput(long double** L, long double* x, long double* y)
 {
@@ -41,6 +41,7 @@ void InitializeInput(long double** L, long double* x, long double* y)
 int main(int argc, char *argv[])
 {
     n = strtol(argv[1], NULL, 10);
+    nthreads = strtol(argv[2], NULL, 10);
     // Input taking!!
     L = (long double**)malloc( (n)*sizeof(long double*) );
     assert(L != NULL);
@@ -69,19 +70,32 @@ int main(int argc, char *argv[])
     // Solving
     float start = 0.0, end = 0.0;
     start = omp_get_wtime();
+
+#pragma omp parallel num_threads(nthreads)
+{
+#pragma omp for
     for (int i = 0; i < n; i++)
     {
+        y[i]/=L[i][i];
+    }
+
+
+    for (int i = 0; i < n; i++)
+    {
+#pragma omp for reduction(-:y[i])
         for (int j = 0; j < i; j++)
         {
-            y[i] -= (x[j] * L[i][j]);
+            // printf("thread id %d in col %d\n", omp_get_thread_num(), j);
+            y[i] -= (x[j] * L[i][j] / L[i][i]);
         }
-        x[i] = y[i] / L[i][i];
+        // printf("at row %d with threadid %d\n", i, omp_get_thread_num());
     }
+}
     end = omp_get_wtime();
-    printf("Solution took %f seconds--------------------\n", end - start);
     // for (int i = 0; i < n; i++)
     // {
     //     printf("%Lf ", x[i]);
     // }
+    printf("\nSolution took %f seconds--------------------\n", end - start);
     return 0;
 }
