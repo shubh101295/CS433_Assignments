@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "seq_row_trs.C": "cpp",
+        "par_col_outer_trs.C": "cpp"
+    }
+}

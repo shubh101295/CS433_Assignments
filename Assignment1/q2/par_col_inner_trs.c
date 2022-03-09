@@ -24,10 +24,10 @@ void InitializeInput(long double** L, long double* x, long double* y)
     {
         x[i] = ((long double)(random() % 100)) / 500.0 + 0.1;
         y[i] = 0;
-        printf("%Lf ", x[i]);
+        // printf("%Lf ", x[i]);
         // printf("y[%d] =  %Lf\n", i, y[i]);
     }
-        printf("\n\n\n");
+        // printf("\n\n\n");
     for (int i = 0; i < n; i++)
     {
         for (int j = 0; j <=i; j++)
@@ -93,10 +93,10 @@ int main(int argc, char *argv[])
     }
 }
     end = omp_get_wtime();
-    for (int i = 0; i < n; i++)
-    {
-        printf("%Lf ", x[i]);
-    }
+    // for (int i = 0; i < n; i++)
+    // {
+    //     printf("%Lf ", x[i]);
+    // }
     printf("Solution took %lf seconds--------------------\n", end - start);
     return 0;
 }

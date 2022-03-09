@@ -17,4 +17,4 @@ log_clean:
 	rm -rf *.out.*
 
 exec_clean:
-	rm -rf seq_trs seq_col_trs seq_col_trs_simd seq_row_trs seq_row_trs_simd par_col_trs par_col_trs_pad par_row_trs
+	rm -rf seq_trs seq_col_trs seq_col_trs_simd seq_row_trs seq_row_trs_simd par_col_inner_trs par_col_inner_trs_pad par_row_inner_trs
