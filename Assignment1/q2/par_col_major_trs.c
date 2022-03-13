@@ -4,7 +4,7 @@
 #include<assert.h>
 #include<omp.h>
 
-#define RAND 1
+// #define RAND 1
 
 long double **L, *y, *x, *diag;
 char *name_in, *name_out;
@@ -12,18 +12,18 @@ int n, nthreads;
 
 void InitializeInput(long double** L, long double* x, long double* y)
 {
-    FILE* fout = fopen("random.txt", "w");
-    fprintf(fout, "%d\n", n);
+    // FILE* fout = fopen("random.txt", "w");
+    // fprintf(fout, "%d\n", n);
     for (int i = 0; i < n; i++)
     {
         for (int j = 0; j <= i; j++)
         {
             L[j][i - j] = ((long double)(random() % 100)) / 500.0 + 0.1;
             if(i == j) L[j][0] = 2;
-            fprintf(fout, "%Lf ", L[j][i-j]);
+            // fprintf(fout, "%Lf ", L[j][i-j]);
             // printf("%Lf ", L[j][i- j]);
         }
-        fprintf(fout, "\n");
+        // fprintf(fout, "\n");
         // printf("\n");
     }
     for (int i = 0; i < n; i++)
@@ -39,13 +39,13 @@ void InitializeInput(long double** L, long double* x, long double* y)
         {
             y[i]+=(L[j][i - j] * x[j]);
         }
-        fprintf(fout, "%Lf ", y[i]);
+        // fprintf(fout, "%Lf ", y[i]);
     }
     for (int i = 0; i < n; i++)
     {
         x[i] = ((long double)(random() % 100)) / 500.0 + 0.1;
     }
-    fclose(fout);
+    // fclose(fout);
 }
 
 int main(int argc, char *argv[])
@@ -121,10 +121,10 @@ int main(int argc, char *argv[])
 }
     end = omp_get_wtime();
 #ifdef RAND
-    for (int i = 0; i < n; i++)
-    {
-        printf("%Lf ", x[i]);
-    }
+    // for (int i = 0; i < n; i++)
+    // {
+    //     printf("%Lf ", x[i]);
+    // }
 #else
     for(int i = 0; i < n; i++)
     {
