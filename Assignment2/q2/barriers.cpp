@@ -3,10 +3,12 @@
 #include <sys/time.h>
 using namespace std;
 
-#define N 10000
+#define N 1000000
 
 int num_threads;
 pthread_mutex_t mutex_for_print = PTHREAD_MUTEX_INITIALIZER;
+int MAX; // log(num_threads)
+
 
 struct bar_type1 {
 	int counter;
@@ -57,21 +59,58 @@ void* barrier_sense_reversal_caller(void *param)
 
 		barrier_sense_reversal(&bar_name1,num_threads,((i%2)!=0));
 
-		if (id==0 && i%100==0)
-		{
-			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
-			// cout<<
-		}
+		// if (id==0 && i%100==0)
+		// {
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
+		// 	// cout<<
+		// }
 		// pthread_mutex_lock(&mutex_for_print);
 		// pthread_mutex_unlock(&mutex_for_print);
 
 	}
 }
 
+vector<vector<int> > flag;
+
+void tree_barrier(int pid,int P){
+	unsigned int i,mask;
+	for(i=0,mask=1;(mask&pid)!=0;++i,mask<<=1)
+	{
+		while(!flag[pid][i]);
+		flag[pid][i]= 0;
+	}
+	if( pid < (P-1)) {
+		flag[pid+mask][i] = 1;
+		while(!flag[pid][MAX-1]);
+		flag[pid][MAX-1]=0;
+	}
+	for(mask>>=1;mask>0;mask>>=1)
+	{
+		flag[pid-mask][MAX-1] = 1;
+	}
+}
+
 /* b part */ 
 void* tree_barrier_caller_part_b(void *param)
 {
-	
+	int  id = *(int*)(param);
+	for(int i=0;i<N;i++)
+	{
+		// pthread_mutex_lock(&mutex_for_print);
+		// cout<<"BArrier Start for "<<i<<" in thread "<<id<<"\n";
+		// pthread_mutex_unlock(&mutex_for_print);
+
+		tree_barrier(id,num_threads);
+
+		// if (id==0 && i%100==0)
+		// {
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
+		// 	// cout<<
+		// }
+		// pthread_mutex_lock(&mutex_for_print);
+		// pthread_mutex_unlock(&mutex_for_print);
+
+	}	
 }
 
 int main(int argc,char *argv[]){
@@ -91,12 +130,34 @@ int main(int argc,char *argv[]){
 	tid = (pthread_t*)malloc(num_threads*sizeof(pthread_t));
 	id = (int*)malloc(num_threads*sizeof(int));
  	for (int i=0; i<num_threads; i++) id[i] = i;
-	
-	pthread_attr_init(&attr);
-	gettimeofday(&tv0, &tz0);
+	MAX = 0;
+	int num_threads2 = num_threads;
+	while(num_threads2)
+	{
+		MAX+=1;
+		num_threads2/=2;
+	}
+	flag.resize(num_threads);
 	for(int i=0;i<num_threads;i++)
 	{
-		pthread_create(&tid[i], &attr, barrier_sense_reversal_caller, &id[i]);
+		flag[i].resize(MAX);
+		for(int j=0;j<MAX;j++) flag[i][j]=0;
+	}
+
+	pthread_attr_init(&attr);
+	gettimeofday(&tv0, &tz0);
+	// for(int i=0;i<num_threads;i++)
+	// {
+	// 	pthread_create(&tid[i], &attr, barrier_sense_reversal_caller, &id[i]);
+	// }
+
+	// for (int i=0; i<num_threads; i++) {
+	// 	pthread_join(tid[i], NULL);
+	// }
+
+	for(int i=0;i<num_threads;i++)
+	{
+		pthread_create(&tid[i], &attr, tree_barrier_caller_part_b, &id[i]);
 	}
 
 	for (int i=0; i<num_threads; i++) {
@@ -104,6 +165,7 @@ int main(int argc,char *argv[]){
 	}
 
 	gettimeofday(&tv1, &tz1);
+
 	printf("Time: %ld microseconds\n", (tv1.tv_sec-tv0.tv_sec)*1000000+(tv1.tv_usec-tv0.tv_usec));
 	return 0;
 }
