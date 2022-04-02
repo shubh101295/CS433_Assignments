@@ -177,7 +177,7 @@ void* centralised_barrier_using_posix_condition_variable_caller_part_c(void *par
 /* part d */ 
 
 
-void tree_barrier_using_posix_condition_variable(int pid,int P,int yo){
+void tree_barrier_using_posix_condition_variable(int pid,int P){
 	unsigned int i,mask;
 	for(i=0,mask=1;(mask&pid)!=0;++i,mask<<=1)
 	{
@@ -233,7 +233,7 @@ void* tree_barrier_using_posix_condition_variable_caller_part_d(void *param)
 		// cout<<"BArrier Start for "<<i<<" in thread "<<id<<"\n";
 		// pthread_mutex_unlock(&mutex_for_print);
 
-		tree_barrier_using_posix_condition_variable(id,num_threads,i);
+		tree_barrier_using_posix_condition_variable(id,num_threads);
 		// centralised_barrier_using_posix_condition_variable(&bar_name2,num_threads);
 
 
