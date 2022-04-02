@@ -75,11 +75,11 @@ void* barrier_sense_reversal_caller(void *param)
 
 		barrier_sense_reversal(&bar_name1,num_threads,((i%2)!=0));
 
-		// if (id==0 && i%100==0)
-		// {
-		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" barrier_sense_reversal_caller"<<"\n";
-		// 	// cout<<
-		// }
+		if (id==0 && i%1000==0)
+		{
+			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" barrier_sense_reversal_caller"<<"\n";
+			// cout<<
+		}
 		// pthread_mutex_lock(&mutex_for_print);
 		// pthread_mutex_unlock(&mutex_for_print);
 
