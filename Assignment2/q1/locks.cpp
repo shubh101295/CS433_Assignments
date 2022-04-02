@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 	tid = (pthread_t*)malloc(nthreads * sizeof(pthread_t));
 
 	pthread_attr_init(&attr);
-    sem_init(&sem, 0, 0);
+    sem_init(&sem, 0, 1);
     start = omp_get_wtime();
 
 	for(int i = 0; i < nthreads; i++)
