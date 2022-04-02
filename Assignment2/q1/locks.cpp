@@ -5,7 +5,8 @@
 
 using namespace std;
 
-#define nthreads 1
+bool CompareAndSet(int oldVal, int newVal, int* ptr);
+#define nthreads 5
 #define N 10000000
 
 //shared variables
@@ -51,19 +52,42 @@ void Release_binary_semaphore(sem_t* sem)
     sem_post(sem);
     return;
 }
+/*----------------SPIN LOCK CMPXCHG-------------------------------*/
+int spin_lock = 0;
 
+void Acquire_spin_lock_cmpxchg(int* lock_addr)
+{
+    while(!CompareAndSet(0, 1, lock_addr));
+}
+
+void Release_spin_lock_cmpxchg(int* lock_addr)
+{
+       asm("":::"memory");
+       (*lock_addr) = 0;
+}
 /*----------------------------------------------------------*/
+bool CompareAndSet(int oldVal, int newVal, int* ptr)
+{
+    int oldValOut;
+    bool result;
+    asm(
+        "lock cmpxchgl %4, %1 \n setzb %0"
+        :"=qm"(result), "+m"(*ptr), "=a"(oldValOut)
+        :"a"(oldVal), "r"(newVal)
+        :);
+    return result;
+}
 
 //benchmark
 void* benchmark(void* param)
 {
     for (int i = 0; i < N; i++)
     {
-        Acquire_binary_semaphore(&sem);
+        Acquire_spin_lock_cmpxchg(&spin_lock);
         assert(x==y);
         x = y + 1;
         y++;
-        Release_binary_semaphore(&sem);
+        Release_spin_lock_cmpxchg(&spin_lock);
     }
     return NULL;
 }
@@ -76,7 +100,7 @@ int main(int argc, char* argv[])
 	tid = (pthread_t*)malloc(nthreads * sizeof(pthread_t));
 
 	pthread_attr_init(&attr);
-    sem_init(&sem, 0, 1);
+    // sem_init(&sem, 0, 1);
     start = omp_get_wtime();
 
 	for(int i = 0; i < nthreads; i++)
