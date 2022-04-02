@@ -77,7 +77,7 @@ void* barrier_sense_reversal_caller(void *param)
 
 		// if (id==0 && i%100==0)
 		// {
-		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" barrier_sense_reversal_caller"<<"\n";
 		// 	// cout<<
 		// }
 		// pthread_mutex_lock(&mutex_for_print);
@@ -121,7 +121,7 @@ void* tree_barrier_caller_part_b(void *param)
 
 		// if (id==0 && i%100==0)
 		// {
-		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" tree_barrier_caller_part_b"<<"\n";
 		// 	// cout<<
 		// }
 		// pthread_mutex_lock(&mutex_for_print);
@@ -164,11 +164,11 @@ void* centralised_barrier_using_posix_condition_variable_caller_part_c(void *par
 
 		centralised_barrier_using_posix_condition_variable(&bar_name2,num_threads);
 
-		if (id==0 && i%1==0)
-		{
-			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
-			// cout<<
-		}
+		// if (id==0 && i%1==0)
+		// {
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" centralised_barrier_using_posix_condition_variable_caller_part_c "<<"\n";
+		// 	// cout<<
+		// }
 		// pthread_mutex_lock(&mutex_for_print);
 		// pthread_mutex_unlock(&mutex_for_print);
 
@@ -237,12 +237,12 @@ void* tree_barrier_using_posix_condition_variable_caller_part_d(void *param)
 		tree_barrier_using_posix_condition_variable(id,num_threads);
 		// centralised_barrier_using_posix_condition_variable(&bar_name2,num_threads);
 
-		if (id==0 && i%100==0)
-		{
-			// pthread_mutex_lock(&mutex_for_print);
-			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
-			// pthread_mutex_unlock(&mutex_for_print);
-		}
+		// if (id==0 && i%100==0)
+		// {
+		// 	// pthread_mutex_lock(&mutex_for_print);
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" tree_barrier_using_posix_condition_variable_caller_part_d"<<"\n";
+		// 	// pthread_mutex_unlock(&mutex_for_print);
+		// }
 	}	
 }
 
@@ -265,12 +265,12 @@ void* posix_barrier_interface_caller(void *param)
 
 		posix_barrier_interface();
 		
-		if (id==0 && i%100==0)
-		{
-			// pthread_mutex_lock(&mutex_for_print);
-			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
-			// pthread_mutex_unlock(&mutex_for_print);
-		}
+		// if (id==0 && i%100==0)
+		// {
+		// 	// pthread_mutex_lock(&mutex_for_print);
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" posix_barrier_interface_caller"<<"\n";
+		// 	// pthread_mutex_unlock(&mutex_for_print);
+		// }
 	}	
 }
 
@@ -321,56 +321,67 @@ int main(int argc,char *argv[]){
 	pthread_attr_init(&attr);
 	gettimeofday(&tv0, &tz0);
 
-	/* part a */
-	// for(int i=0;i<num_threads;i++)
-	// {
-	// 	pthread_create(&tid[i], &attr, barrier_sense_reversal_caller, &id[i]);
-	// }
-
-	// for (int i=0; i<num_threads; i++) {
-	// 	pthread_join(tid[i], NULL);
-	// }
-
-
-	/* part b */
-
-	// for(int i=0;i<num_threads;i++)
-	// {
-	// 	pthread_create(&tid[i], &attr, tree_barrier_caller_part_b, &id[i]);
-	// }
-
-	// for (int i=0; i<num_threads; i++) {
-	// 	pthread_join(tid[i], NULL);
-	// }
-
-	/* part c */
-	// for(int i=0;i<num_threads;i++)
-	// {
-	// 	pthread_create(&tid[i], &attr, centralised_barrier_using_posix_condition_variable_caller_part_c, &id[i]);
-	// }
-
-	// for (int i=0; i<num_threads; i++) {
-	// 	pthread_join(tid[i], NULL);
-	// }
-
-	/* part d */
-	// for(int i=0;i<num_threads;i++)
-	// {
-	// 	pthread_create(&tid[i], &attr, tree_barrier_using_posix_condition_variable_caller_part_d, &id[i]);
-	// }
-
-	// for (int i=0; i<num_threads; i++) {
-	// 	pthread_join(tid[i], NULL);
-	// }
-
-	/* part e */
-	for(int i=0;i<num_threads;i++)
+	int run_for_type= 4;
+	if(run_for_type==0)
 	{
-		pthread_create(&tid[i], &attr, posix_barrier_interface_caller, &id[i]);
+		/* part a */
+		for(int i=0;i<num_threads;i++)
+		{
+			pthread_create(&tid[i], &attr, barrier_sense_reversal_caller, &id[i]);
+		}
+		for (int i=0; i<num_threads; i++) {
+			pthread_join(tid[i], NULL);
+		}
 	}
+	else if(run_for_type==1)
+	{
+		/* part b */
 
-	for (int i=0; i<num_threads; i++) {
-		pthread_join(tid[i], NULL);
+		for(int i=0;i<num_threads;i++)
+		{
+			pthread_create(&tid[i], &attr, tree_barrier_caller_part_b, &id[i]);
+		}
+
+		for (int i=0; i<num_threads; i++) {
+			pthread_join(tid[i], NULL);
+		}
+	}
+	else if(run_for_type==2)
+	{
+		/* part c */
+		for(int i=0;i<num_threads;i++)
+		{
+			pthread_create(&tid[i], &attr, centralised_barrier_using_posix_condition_variable_caller_part_c, &id[i]);
+		}
+
+		for (int i=0; i<num_threads; i++) {
+			pthread_join(tid[i], NULL);
+		}
+	}
+	else if(run_for_type==3)
+	{
+		/* part d */
+		for(int i=0;i<num_threads;i++)
+		{
+			pthread_create(&tid[i], &attr, tree_barrier_using_posix_condition_variable_caller_part_d, &id[i]);
+		}
+
+		for (int i=0; i<num_threads; i++) {
+			pthread_join(tid[i], NULL);
+		}
+	}
+	else if(run_for_type==4)
+	{
+		/* part e */
+		for(int i=0;i<num_threads;i++)
+		{
+			pthread_create(&tid[i], &attr, posix_barrier_interface_caller, &id[i]);
+		}
+
+		for (int i=0; i<num_threads; i++) {
+			pthread_join(tid[i], NULL);
+		}
+
 	}
 
 	gettimeofday(&tv1, &tz1);
