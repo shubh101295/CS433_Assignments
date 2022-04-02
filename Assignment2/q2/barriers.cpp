@@ -3,12 +3,17 @@
 #include <sys/time.h>
 using namespace std;
 
-#define N 10
+#define N 1000000
 
 int num_threads;
 pthread_mutex_t mutex_for_print = PTHREAD_MUTEX_INITIALIZER;
 int MAX; // log(num_threads)
 
+vector<vector<int> > flag;
+vector<vector<pthread_cond_t> > cvs(64,vector<pthread_cond_t>(6));
+vector<vector<pthread_mutex_t> > cv_locks(64,vector<pthread_mutex_t>(6));
+
+pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 
 struct bar_type1 {
 	int counter;
@@ -82,7 +87,6 @@ void* barrier_sense_reversal_caller(void *param)
 
 /* part b */ 
 
-vector<vector<int> > flag;
 
 void tree_barrier(int pid,int P){
 	unsigned int i,mask;
@@ -170,6 +174,85 @@ void* centralised_barrier_using_posix_condition_variable_caller_part_c(void *par
 	}	
 }
 
+/* part d */ 
+
+
+void tree_barrier_using_posix_condition_variable(int pid,int P,int yo){
+	unsigned int i,mask;
+	for(i=0,mask=1;(mask&pid)!=0;++i,mask<<=1)
+	{
+		pthread_mutex_lock(&cv_locks[pid][i]);
+		while(!flag[pid][i]) pthread_cond_wait(&cvs[pid][i], &cv_locks[pid][i]);
+		pthread_mutex_unlock(&cv_locks[pid][i]);
+
+		flag[pid][i]= 0;
+	}
+	// pthread_mutex_lock(&mutex_for_print);
+	// 	cout<<"BArrier PART A for "<<pid<<" for i== "<<yo<<"\n";
+	// 	pthread_mutex_unlock(&mutex_for_print);
+
+	if( pid < (P-1)) {
+		flag[pid+mask][i] = 1;
+
+		pthread_mutex_lock(&cv_locks[pid+mask][i]);
+		pthread_cond_broadcast(&cvs[pid+mask][i]);
+		pthread_mutex_unlock(&cv_locks[pid+mask][i]);
+		
+
+		pthread_mutex_lock(&cv_locks[pid][MAX-1]);
+		while(!flag[pid][MAX-1]) pthread_cond_wait(&cvs[pid][MAX-1], &cv_locks[pid][MAX-1]);
+		pthread_mutex_unlock(&cv_locks[pid][MAX-1]);
+		flag[pid][MAX-1]=0;
+	}
+	
+		// pthread_mutex_lock(&mutex_for_print);
+		// cout<<"BArrier PART B for "<<pid<<" for i== "<<yo<<"\n";
+		// pthread_mutex_unlock(&mutex_for_print);
+
+	for(mask>>=1;mask>0;mask>>=1)
+	{
+		flag[pid-mask][MAX-1] = 1;
+		pthread_mutex_lock(&cv_locks[pid-mask][MAX-1]);
+		pthread_cond_broadcast(&cvs[pid-mask][MAX-1]);
+		pthread_mutex_unlock(&cv_locks[pid-mask][MAX-1]);
+		
+	}
+		// pthread_mutex_lock(&mutex_for_print);
+		// cout<<"BArrier PART C for "<<pid<<" for i== "<<yo<<"\n";
+		// pthread_mutex_unlock(&mutex_for_print);
+
+}
+
+/* d part */ 
+void* tree_barrier_using_posix_condition_variable_caller_part_d(void *param)
+{
+	int  id = *(int*)(param);
+	for(int i=0;i<N;i++)
+	{
+		// pthread_mutex_lock(&mutex_for_print);
+		// cout<<"BArrier Start for "<<i<<" in thread "<<id<<"\n";
+		// pthread_mutex_unlock(&mutex_for_print);
+
+		tree_barrier_using_posix_condition_variable(id,num_threads,i);
+		// centralised_barrier_using_posix_condition_variable(&bar_name2,num_threads);
+
+
+		if (id==0 && i%100==0)
+		{
+			// pthread_mutex_lock(&mutex_for_print);
+
+			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
+			// pthread_mutex_unlock(&mutex_for_print);
+			// cout<<
+		}
+
+
+		// pthread_mutex_lock(&mutex_for_print);
+
+	}	
+}
+
+
 
 int main(int argc,char *argv[]){
 	if(argc!=2)
@@ -193,20 +276,23 @@ int main(int argc,char *argv[]){
 	
 
 
- 		/* part b */ 
-	// MAX = 0;
-	// int num_threads2 = num_threads;
-	// while(num_threads2)
-	// {
-	// 	MAX+=1;
-	// 	num_threads2/=2;
-	// }
-	// flag.resize(num_threads);
-	// for(int i=0;i<num_threads;i++)
-	// {
-	// 	flag[i].resize(MAX);
-	// 	for(int j=0;j<MAX;j++) flag[i][j]=0;
-	// }
+ 		/* part b and d */ 
+	MAX = 0;
+	int num_threads2 = num_threads;
+	while(num_threads2)
+	{
+		MAX+=1;
+		num_threads2/=2;
+	}
+	flag.resize(num_threads);
+	// cvs.resize(num_threads);
+
+	for(int i=0;i<num_threads;i++)
+	{
+		flag[i].resize(MAX);
+		// cvs[i].resize(MAX);
+		for(int j=0;j<MAX;j++) flag[i][j]=0;
+	}
 
 	pthread_attr_init(&attr);
 	gettimeofday(&tv0, &tz0);
@@ -234,9 +320,20 @@ int main(int argc,char *argv[]){
 	// }
 
 	/* part c */
+	// for(int i=0;i<num_threads;i++)
+	// {
+	// 	pthread_create(&tid[i], &attr, centralised_barrier_using_posix_condition_variable_caller_part_c, &id[i]);
+	// }
+
+	// for (int i=0; i<num_threads; i++) {
+	// 	pthread_join(tid[i], NULL);
+	// }
+
+	/* part d */
+
 	for(int i=0;i<num_threads;i++)
 	{
-		pthread_create(&tid[i], &attr, centralised_barrier_using_posix_condition_variable_caller_part_c, &id[i]);
+		pthread_create(&tid[i], &attr, tree_barrier_using_posix_condition_variable_caller_part_d, &id[i]);
 	}
 
 	for (int i=0; i<num_threads; i++) {
