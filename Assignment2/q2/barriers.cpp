@@ -2,6 +2,7 @@
 #include<pthread.h>
 #include <sys/time.h>
 using namespace std;
+static pthread_barrier_t barrier_from_p_thread;
 
 #define N 1000000
 
@@ -236,19 +237,40 @@ void* tree_barrier_using_posix_condition_variable_caller_part_d(void *param)
 		tree_barrier_using_posix_condition_variable(id,num_threads);
 		// centralised_barrier_using_posix_condition_variable(&bar_name2,num_threads);
 
-
 		if (id==0 && i%100==0)
 		{
 			// pthread_mutex_lock(&mutex_for_print);
-
 			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
 			// pthread_mutex_unlock(&mutex_for_print);
-			// cout<<
 		}
+	}	
+}
 
 
+/* e part */
+
+void posix_barrier_interface()
+{
+	pthread_barrier_wait(&barrier_from_p_thread);	
+}
+
+void* posix_barrier_interface_caller(void *param)
+{
+	int  id = *(int*)(param);
+	for(int i=0;i<N;i++)
+	{
 		// pthread_mutex_lock(&mutex_for_print);
+		// cout<<"BArrier Start for "<<i<<" in thread "<<id<<"\n";
+		// pthread_mutex_unlock(&mutex_for_print);
 
+		posix_barrier_interface();
+		
+		if (id==0 && i%100==0)
+		{
+			// pthread_mutex_lock(&mutex_for_print);
+			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<"\n";
+			// pthread_mutex_unlock(&mutex_for_print);
+		}
 	}	
 }
 
@@ -294,6 +316,8 @@ int main(int argc,char *argv[]){
 		for(int j=0;j<MAX;j++) flag[i][j]=0;
 	}
 
+	pthread_barrier_init(&barrier_from_p_thread, NULL, num_threads);
+	// barrier_from_p_thread
 	pthread_attr_init(&attr);
 	gettimeofday(&tv0, &tz0);
 
@@ -330,16 +354,24 @@ int main(int argc,char *argv[]){
 	// }
 
 	/* part d */
+	// for(int i=0;i<num_threads;i++)
+	// {
+	// 	pthread_create(&tid[i], &attr, tree_barrier_using_posix_condition_variable_caller_part_d, &id[i]);
+	// }
 
+	// for (int i=0; i<num_threads; i++) {
+	// 	pthread_join(tid[i], NULL);
+	// }
+
+	/* part e */
 	for(int i=0;i<num_threads;i++)
 	{
-		pthread_create(&tid[i], &attr, tree_barrier_using_posix_condition_variable_caller_part_d, &id[i]);
+		pthread_create(&tid[i], &attr, posix_barrier_interface_caller, &id[i]);
 	}
 
 	for (int i=0; i<num_threads; i++) {
 		pthread_join(tid[i], NULL);
 	}
-
 
 	gettimeofday(&tv1, &tz1);
 
