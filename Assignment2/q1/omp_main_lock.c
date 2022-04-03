@@ -35,5 +35,5 @@ int main()
     assert(x == y);
     assert(x == N * nthreads);
     total = finish - start;
-    cout<<"time taken is "<<total<<" with x being "<<x<<" \n";
+    printf("time taken is %lf with x being %d \n", total, x);
 }
