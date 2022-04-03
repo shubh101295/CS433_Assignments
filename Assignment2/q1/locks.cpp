@@ -6,7 +6,7 @@
 using namespace std;
 
 bool CompareAndSet(int oldVal, int newVal, int* ptr);
-#define nthreads 5
+#define nthreads 1
 #define N 10000000
 
 //shared variables
@@ -55,15 +55,39 @@ void Release_binary_semaphore(sem_t* sem)
 /*----------------SPIN LOCK CMPXCHG-------------------------------*/
 int spin_lock = 0;
 
-void Acquire_spin_lock_cmpxchg(int* lock_addr)
+// Acquire for spin lock
+void Acquire_spin_lock(int* lock_addr)
 {
     while(!CompareAndSet(0, 1, lock_addr));
 }
 
-void Release_spin_lock_cmpxchg(int* lock_addr)
+// Release for spin lock
+void Release_spin_lock(int* lock_addr)
 {
-       asm("":::"memory");
-       (*lock_addr) = 0;
+    asm("":::"memory");
+    (*lock_addr) = 0;
+}
+/*--------------------TICKET LOCK-----------------------------*/
+int ticket = 0;
+int release_count = 0;
+
+void Acquire_ticket_lock(int* ticket_addr, int* release_addr)
+{
+    int oldVal = *ticket_addr;
+    CompareAndSet(oldVal, oldVal + 1, ticket_addr);
+    (*release_addr) = (*release_addr) + 1;
+    cout<<"*ticket addr is now "<<*ticket_addr<<"\n";
+    while(oldVal != *release_addr);
+    return;
+}
+
+void Release_ticket_lock(int* ticket_addr, int* release_addr)
+{
+    asm("":::"memory");
+    (*release_addr) = (*release_addr) + 1;
+    cout<<"*release addr is now "<<*release_addr<<"\n";
+    asm("mfence":::"memory");
+    return;
 }
 /*----------------------------------------------------------*/
 bool CompareAndSet(int oldVal, int newVal, int* ptr)
@@ -83,11 +107,12 @@ void* benchmark(void* param)
 {
     for (int i = 0; i < N; i++)
     {
-        Acquire_spin_lock_cmpxchg(&spin_lock);
+        Acquire_ticket_lock(&ticket, &release_count);
+        // cout<<"i "<<i<<" x "<<x<<" y "<<y<<"\n";
         assert(x==y);
         x = y + 1;
         y++;
-        Release_spin_lock_cmpxchg(&spin_lock);
+        Release_ticket_lock(&ticket, &release_count);
     }
     return NULL;
 }
