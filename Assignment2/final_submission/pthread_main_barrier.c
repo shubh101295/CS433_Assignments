@@ -26,10 +26,12 @@ void* barrier_sense_reversal_caller(void *param)
 	for( int i=0;i<N;i++)
 	{
 		barrier_sense_reversal(&bar_name1,num_threads,&local_sense);
+		/*
 		if (id==0 && i%100==0)
 		{
 			printf("%d Ended \n",i);
 		}
+		*/
 	}
 }
 
@@ -42,10 +44,12 @@ void* tree_barrier_caller_part_b(void *param)
 	{
 	
 		tree_barrier(&bar_name2,id,num_threads);
+		/*
 		if (id==0 && i%100==0)
 		{
 			printf("%d Ended from tree_barrier_caller_part_b\n",i);
 		}
+		*/
 	}	
 }
 
@@ -58,12 +62,14 @@ void* centralised_barrier_using_posix_condition_variable_caller_part_c(void *par
 	{
 	
 		centralised_barrier_using_posix_condition_variable(&bar_name3,num_threads);
-
+		/*
 		if (id==0 && i%100==0)
 		{
 			printf("%d Ended from centralised_barrier_using_posix_condition_variable_caller_part_c\n",i);
 		}
+		*/
 	}	
+
 }
 
 /* benchmarking Tree barrier using POSIX condition variable */
@@ -75,15 +81,16 @@ void* tree_barrier_using_posix_condition_variable_caller_part_d(void *param)
 	{
 
 		tree_barrier_using_posix_condition_variable(&bar_name4,id,num_threads);
+		/*
 		if (id==0 && i%100==0)
 		{
 			printf("%d Ended from tree_barrier_using_posix_condition_variable_caller_part_d\n",i);
 		}
-		
+		*/
 	}	
 }
 
-/* benchmarking */
+/* benchmarking posix_barrier_interface */
 
 void* posix_barrier_interface_caller(void *param)
 {

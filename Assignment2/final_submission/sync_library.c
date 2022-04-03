@@ -103,6 +103,7 @@ struct bar_type3 {
 	pthread_cond_t cv;
 };
 
+/* init for  Centralized barrier using POSIX condition variable */ 
 void centralised_barrier_using_posix_condition_variable_init(struct bar_type3* bar_name1){
 	bar_name1->counter=0;
 	pthread_mutex_init(&bar_name1->mutex,NULL);
@@ -198,7 +199,7 @@ void tree_barrier_using_posix_condition_variable(struct bar_type4* bar_name,int 
 		bar_name->flag[pid-mask][bar_name->MAX-1] = 1;
 		pthread_mutex_lock(&bar_name->cv_locks[pid-mask][bar_name->MAX-1]);
 		pthread_cond_broadcast(&bar_name->cvs[pid-mask][bar_name->MAX-1]);
-		pthread_mutex_unlock(&bar_name->cv_locks[pid-mask][bar_name->MAX-1]);
+		pthread_mutex_unlock(&bar_ Centralized barrier using POSIX condition variablename->cv_locks[pid-mask][bar_name->MAX-1]);
 		
 	}
 
