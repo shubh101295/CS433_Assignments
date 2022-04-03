@@ -1,7 +1,11 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<stdbool.h>
+#include<assert.h>
+#include<pthread.h>
+#include<semaphore.h>
 #include<omp.h>
-#include<bits/stdc++.h>
 
-using namespace std;
 
 #define nthreads 8
 #define N 10000000
