@@ -21,7 +21,6 @@ int num_threads;
 
 void* barrier_sense_reversal_caller(void *param)
 {
-	// int local_sense = 0;
 	int  id = *(int*)(param);
 	int local_sense = 0;
 	for( int i=0;i<N;i++)
@@ -191,35 +190,3 @@ int main(int argc,char *argv[]){
 	printf("Time: %ld microseconds\n", (tv1.tv_sec-tv0.tv_sec)*1000000+(tv1.tv_usec-tv0.tv_usec));
 	return 0;
 }
-
-
-	// bar_name1.counter = 0;
-	// bar_name1.flag = 0;
-	// pthread_mutex_init(&bar_name1.mutex,NULL);
-	// bar_name2.counter = 0;
-	// pthread_mutex_init(&bar_name2.mutex,NULL);
-	// pthread_cond_init(&bar_name2.cv,NULL);
-	// pthread_barrier_init(&barrier_from_p_thread,NULL,num_threads);
-
-	// flag = (int **)malloc(sizeof(int*)*num_threads);
-	// cvs = (pthread_cond_t **)malloc(sizeof(pthread_cond_t*)*num_threads);
-	// cv_locks = (pthread_mutex_t **)malloc(sizeof(pthread_mutex_t*)*num_threads);
-	
- //    for (int i = 0; i<num_threads; i++) {
- //        flag[i] = (int *)malloc(sizeof(int)*num_threads);
- //        cvs[i] = (pthread_cond_t *)malloc(sizeof(pthread_cond_t)*num_threads);
- //        cv_locks[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t)*num_threads);
-        
- //        for (int j = 0; j<num_threads; j++) {
- //            flag[i][j] = 0;
- //        	pthread_mutex_init(&cv_locks[i][j],NULL);
-	// 		pthread_cond_init(&cvs[i][j],NULL);
- //        }
- //    }
- //    MAX = 0;
-	// int num_threads2 = num_threads;
-	// while(num_threads2)
-	// {
-	// 	MAX+=1;
-	// 	num_threads2/=2;
-	// }
