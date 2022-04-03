@@ -17,6 +17,7 @@ bool CompareAndSet(int oldVal, int newVal, int* ptr);
 int x = 0;
 int y = 0;
 
+
 //time measurement
 double start = 0;
 double finish = 0;
@@ -298,8 +299,8 @@ int main(int argc, char* argv[])
 	for(int i = 0; i < nthreads; i++)
 	{
 		// pthread_create(&tid[i], &attr, benchmark, NULL);
-		// pthread_create(&tid[i], &attr, benchmark_array_lock, NULL);
-		pthread_create(&tid[i], &attr, benchmark, &id[i]);
+		pthread_create(&tid[i], &attr, benchmark_array_lock, NULL);
+		// pthread_create(&tid[i], &attr, benchmark, &id[i]);
 	}
 
 	for (int i=0; i< nthreads; i++) {

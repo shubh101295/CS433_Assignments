@@ -4,7 +4,6 @@
 #include <sys/time.h>
 #include <assert.h>
 
-#include "sync_library.c"
 
 #define N 1000000
 
