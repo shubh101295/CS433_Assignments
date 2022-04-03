@@ -1,7 +1,10 @@
-#include<bits/stdc++.h>
-#include<pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
 #include <sys/time.h>
-using namespace std;
+#include <assert.h>
+
+// using namespace std;
 static pthread_barrier_t barrier_from_p_thread;
 
 #define N 1000000
@@ -11,23 +14,28 @@ pthread_mutex_t mutex_for_print = PTHREAD_MUTEX_INITIALIZER;
 int MAX; // log(num_threads)
 
 
-vector<vector<int> > flag;
-vector<vector<pthread_cond_t> > cvs(64,vector<pthread_cond_t>(6));
-vector<vector<pthread_mutex_t> > cv_locks(64,vector<pthread_mutex_t>(6));
+// vector<vector<int> > flag;
+int flag[64][6];
+pthread_cond_t cvs[64][6];
+pthread_mutex_t cv_locks[64][6];
+// vector<vector<pthread_cond_t> > cvs(64,vector<pthread_cond_t>(6));
+// vector<vector<pthread_mutex_t> > cv_locks(64,vector<pthread_mutex_t>(6));
 
 pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 
 struct bar_type1 {
 	int counter;
-	pthread_mutex_t mutex;
-	bool flag = false;
+	pthread_mutex_t mutex;// = PTHREAD_MUTEX_INITIALIZER;
+	int flag;// = 0;
+
+
 };
 
 struct bar_type1 bar_name1;
 
 struct bar_type2 {
 	int counter;
-	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_t mutex;// = PTHREAD_MUTEX_INITIALIZER;
 	pthread_cond_t cv;
 };
 
@@ -35,14 +43,10 @@ struct bar_type2 bar_name2;
 
 
 
-// struct local_sense1{
-// 	bool local_sense = false;
-// 	char c[63];
-// }
 
-void barrier_sense_reversal(struct bar_type1* bar_name, int P,bool* local_sense)
+void barrier_sense_reversal(struct bar_type1* bar_name, int P,int local_sense)
 {
-	(*local_sense) = !(*local_sense);
+	local_sense = !local_sense;
 	// pthread_mutex_lock(&mutex_for_print);
 	// cout<<"Local sence == "<<local_sense<<" and P=="<<P<<"\n";
 	
@@ -56,13 +60,11 @@ void barrier_sense_reversal(struct bar_type1* bar_name, int P,bool* local_sense)
 	{
 		pthread_mutex_unlock(&bar_name->mutex);
 		bar_name->counter = 0;
-		bar_name->flag = *local_sense;
+		bar_name->flag = local_sense;
 	}
 	else{
 		pthread_mutex_unlock(&bar_name->mutex);
-		while(bar_name->flag != (*local_sense)){
-			asm("":::"memory");
-		}
+		while(bar_name->flag != local_sense);
 	}
 }
 
@@ -70,20 +72,19 @@ void* barrier_sense_reversal_caller(void *param)
 {
 	// int local_sense = 0;
 	int  id = *(int*)(param);
-	bool local_sense = false;
-	for( int i=0;i<N;i++)
+	for(int i=0;i<N;i++)
 	{
 		// pthread_mutex_lock(&mutex_for_print);
 		// cout<<"BArrier Start for "<<i<<" in thread "<<id<<"\n";
 		// pthread_mutex_unlock(&mutex_for_print);
 
-		barrier_sense_reversal(&bar_name1,num_threads,&local_sense);
+		barrier_sense_reversal(&bar_name1,num_threads,((i%2)!=0));
 
-		if (id==0 && i%1000==0)
-		{
-			cout<<"BArrier Ended for "<<i<<" "<<N<<" "<<(i<N)<<" in thread "<<id<<" barrier_sense_reversal_caller"<<"\n";
-			// cout<<
-		}
+		// if (id==0 && i%1000==0)
+		// {
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" barrier_sense_reversal_caller"<<"\n";
+		// 	// cout<<
+		// }
 		// pthread_mutex_lock(&mutex_for_print);
 		// pthread_mutex_unlock(&mutex_for_print);
 
@@ -187,10 +188,7 @@ void tree_barrier_using_posix_condition_variable(int pid,int P){
 	for(i=0,mask=1;(mask&pid)!=0;++i,mask<<=1)
 	{
 		pthread_mutex_lock(&cv_locks[pid][i]);
-		while(!flag[pid][i]){
-			pthread_cond_wait(&cvs[pid][i], &cv_locks[pid][i]);
-			 asm("":::"memory");
-		} 
+		while(!flag[pid][i]) pthread_cond_wait(&cvs[pid][i], &cv_locks[pid][i]);
 		pthread_mutex_unlock(&cv_locks[pid][i]);
 
 		flag[pid][i]= 0;
@@ -208,11 +206,7 @@ void tree_barrier_using_posix_condition_variable(int pid,int P){
 		
 
 		pthread_mutex_lock(&cv_locks[pid][MAX-1]);
-		while(!flag[pid][MAX-1]) {
-			 pthread_cond_wait(&cvs[pid][MAX-1], &cv_locks[pid][MAX-1]);
-			 asm("":::"memory");
-
-		}
+		while(!flag[pid][MAX-1]) pthread_cond_wait(&cvs[pid][MAX-1], &cv_locks[pid][MAX-1]);
 		pthread_mutex_unlock(&cv_locks[pid][MAX-1]);
 		flag[pid][MAX-1]=0;
 	}
@@ -248,12 +242,12 @@ void* tree_barrier_using_posix_condition_variable_caller_part_d(void *param)
 		tree_barrier_using_posix_condition_variable(id,num_threads);
 		// centralised_barrier_using_posix_condition_variable(&bar_name2,num_threads);
 
-		if (id==0 && i%100==0)
-		{
-			// pthread_mutex_lock(&mutex_for_print);
-			cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" tree_barrier_using_posix_condition_variable_caller_part_d"<<"\n";
-			// pthread_mutex_unlock(&mutex_for_print);
-		}
+		// if (id==0 && i%100==0)
+		// {
+		// 	// pthread_mutex_lock(&mutex_for_print);
+		// 	cout<<"BArrier Ended for "<<i<<" in thread "<<id<<" tree_barrier_using_posix_condition_variable_caller_part_d"<<"\n";
+		// 	// pthread_mutex_unlock(&mutex_for_print);
+		// }
 	}	
 }
 
@@ -290,7 +284,8 @@ void* posix_barrier_interface_caller(void *param)
 int main(int argc,char *argv[]){
 	if(argc!=2)
 	{
-		cout<<"Need number of threads\n";
+		printf("Need number of arguments\n");
+		// cout<<"Need number of threads\n";
 		exit(1);
 	}
 	pthread_attr_t attr;
@@ -298,10 +293,11 @@ int main(int argc,char *argv[]){
 	struct timeval tv0, tv1;
 	struct timezone tz0, tz1;
 	bar_name1.counter = 0;
+	bar_name1.mutex = PTHREAD_MUTEX_INITIALIZER;
+	bar_name1.flag = 0;
 	bar_name2.counter = 0;
-	pthread_mutex_init(&bar_name1.mutex,NULL);
-	pthread_mutex_init(&bar_name2.mutex,NULL);
-
+	bar_name2.mutex = PTHREAD_MUTEX_INITIALIZER;
+	
 	pthread_t *tid;
 	int *id;
 
@@ -319,16 +315,16 @@ int main(int argc,char *argv[]){
 		MAX+=1;
 		num_threads2/=2;
 	}
-	flag.resize(num_threads);
+	// flag.resize(num_threads);
 	// cvs.resize(num_threads);
 
 	for(int i=0;i<num_threads;i++)
 	{
-		flag[i].resize(MAX);
+		// flag[i].resize(MAX);
 		// cvs[i].resize(MAX);
 		for(int j=0;j<MAX;j++) flag[i][j]=0;
 	}
-	
+
 	pthread_barrier_init(&barrier_from_p_thread, NULL, num_threads);
 	// barrier_from_p_thread
 	pthread_attr_init(&attr);
