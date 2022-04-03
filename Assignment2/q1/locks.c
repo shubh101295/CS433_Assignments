@@ -75,6 +75,7 @@ void Release_spin_lock(int* lock_addr)
 int ticket = 0;
 int release_count = 0;
 
+// Acquire for ticket lock
 void Acquire_ticket_lock(int* ticket_addr, int* release_addr)
 {
     int oldVal;
@@ -94,6 +95,7 @@ void Acquire_ticket_lock(int* ticket_addr, int* release_addr)
     return;
 }
 
+// Release for ticket lock
 void Release_ticket_lock(int* ticket_addr, int* release_addr)
 {
     asm("":::"memory");
@@ -104,6 +106,8 @@ void Release_ticket_lock(int* ticket_addr, int* release_addr)
 }
 /*---------------------TEST AND TEST AND SET--------------------------*/
 int tts_lock = 0;
+
+// Acquire for test & test & set
 void Acquire_test_test_set(int * lock_addr)
 {
     while (true)
@@ -119,6 +123,7 @@ void Acquire_test_test_set(int * lock_addr)
     }
 }
 
+// Release for test & test & set
 void Release_test_test_set(int* lock_addr)
 {
     asm("":::"memory");
@@ -129,6 +134,7 @@ void Release_test_test_set(int* lock_addr)
 bool arr[CACHE_LINE_SIZE * nthreads];
 int free_id = 0;
 
+// Acquire for array lock
 int Acquire_array_lock(int* free_id_addr)
 {
     int i;
@@ -147,6 +153,7 @@ int Acquire_array_lock(int* free_id_addr)
 }
 
 
+// Release for array lock
 void Release_array_lock(int tid)
 {
     arr[CACHE_LINE_SIZE * (tid % nthreads)] = 0;
@@ -159,6 +166,7 @@ bool choosing[nthreads * CACHE_LINE_SIZE];
 int tickets[nthreads * int_lsize];
 int id[nthreads];
 
+// Acquire for bakery lock
 void Acquire_bakery_lock(int tid)
 {
     choosing[tid * CACHE_LINE_SIZE] = true;
@@ -192,6 +200,7 @@ void Acquire_bakery_lock(int tid)
     return;
 }
 
+// Release for bakery lock
 void Release_bakery_lock(int tid)
 {
     asm("":::"memory");
@@ -241,6 +250,7 @@ void* benchmark_array_lock(void* param)
     return NULL;
 }
 
+// benchmark bakery lock
 void* benchmark_bakery_lock(void* param)
 {
     int tid = *(int *)(param);
