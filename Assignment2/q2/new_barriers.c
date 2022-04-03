@@ -39,7 +39,7 @@ pthread_mutex_t ** cv_locks;
 
 
 /* a part */
-void barrier_sense_reversal(struct bar_type1* bar_name, int P,int* local_sense,int id)
+void barrier_sense_reversal(struct bar_type1* bar_name, int P,int* local_sense)
 {
 	(*local_sense) = !(*local_sense);
 
@@ -67,7 +67,7 @@ void* barrier_sense_reversal_caller(void *param)
 	int local_sense = 0;
 	for( int i=0;i<N;i++)
 	{
-		barrier_sense_reversal(&bar_name1,num_threads,&local_sense,id);
+		barrier_sense_reversal(&bar_name1,num_threads,&local_sense);
 		if (id==0 && i%100==0)
 		{
 			printf("%d Ended \n",i);
@@ -333,7 +333,7 @@ int main(int argc,char *argv[]){
 	pthread_attr_init(&attr);
 	gettimeofday(&tv0, &tz0);
 
-	int run_for_type= 4;
+	int run_for_type= 0;
 	if(run_for_type==0)
 	{
 		/* part a */
