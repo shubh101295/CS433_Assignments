@@ -174,16 +174,17 @@ void Acquire_bakery_lock(int tid)
 {
     choosing[tid * CACHE_LINE_SIZE] = true;
     asm("mfence":::"memory");
+    int temp = 0;
     for (int i = 0; i < nthreads; i++)
     {
-        if (tickets[tid * int_lsize] < tickets[i * int_lsize])
+        if (temp < tickets[i * int_lsize])
         {
-            tickets[tid * int_lsize] = tickets[i * int_lsize] + 1;
+            temp = tickets[i * int_lsize];
         }
     }
+    tickets[tid * int_lsize] = temp + 1;
     asm("mfence":::"memory");
     choosing[tid * CACHE_LINE_SIZE] = false;
-    asm("mfence":::"memory");
 
     for (int j = 0; j < nthreads; j++)
     {
@@ -191,13 +192,9 @@ void Acquire_bakery_lock(int tid)
         {
             asm("":::"memory");
         }
-        int ticket_j = tickets[j * int_lsize];
-        int ticket_i = tickets[tid * int_lsize];
-        while(ticket_j && ((ticket_j < ticket_i) || ((ticket_j == ticket_i) && (j < tid)) ))
+        while(tickets[j * int_lsize] && ((tickets[j * int_lsize] < tickets[tid * int_lsize]) || ((tickets[j * int_lsize] == tickets[tid * int_lsize]) && (j < tid)) ))
         {
             asm("":::"memory");
-            ticket_j = tickets[j * int_lsize];
-            ticket_i = tickets[tid * int_lsize];
         }
     }
     return;
@@ -274,11 +271,11 @@ struct bar_type2 {
 
 /* Init for Tree barrier using busy-wait on flags */
 void tree_barrier_init(struct bar_type2* bar_name1,int num_threads)
-{	
+{
 	bar_name1->flag = (int **)malloc(sizeof(int*)*num_threads);
 	for (int i = 0; i<num_threads; i++) {
         bar_name1->flag[i] = (int *)malloc(sizeof(int)*num_threads);
-        
+
         for (int j = 0; j<num_threads; j++) {
             bar_name1->flag[i][j] = 0;
         }
@@ -325,7 +322,7 @@ struct bar_type3 {
 	pthread_cond_t cv;
 };
 
-/* init for  Centralized barrier using POSIX condition variable */ 
+/* init for  Centralized barrier using POSIX condition variable */
 void centralised_barrier_using_posix_condition_variable_init(struct bar_type3* bar_name1){
 	bar_name1->counter=0;
 	pthread_mutex_init(&bar_name1->mutex,NULL);
@@ -359,16 +356,16 @@ struct bar_type4 {
 
 /* Init for Tree barrier using POSIX condition variable */
 void tree_barrier_posix_condition_init(struct bar_type4* bar_name1,int num_threads)
-{	
+{
 	bar_name1->flag = (int **)malloc(sizeof(int*)*num_threads);
 	bar_name1->cvs = (pthread_cond_t **)malloc(sizeof(pthread_cond_t*)*num_threads);
 	bar_name1->cv_locks = (pthread_mutex_t **)malloc(sizeof(pthread_mutex_t*)*num_threads);
-	
+
 	for (int i = 0; i<num_threads; i++) {
         bar_name1->flag[i] = (int *)malloc(sizeof(int)*num_threads);
         bar_name1->cvs[i] = (pthread_cond_t *)malloc(sizeof(pthread_cond_t)*num_threads);
         bar_name1->cv_locks[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t)*num_threads);
-        
+
         for (int j = 0; j<num_threads; j++) {
             bar_name1->flag[i][j] = 0;
             pthread_mutex_init(&bar_name1->cv_locks[i][j],NULL);
@@ -384,7 +381,7 @@ void tree_barrier_posix_condition_init(struct bar_type4* bar_name1,int num_threa
 	}
 }
 
-/* Tree barrier using POSIX condition variable */ 
+/* Tree barrier using POSIX condition variable */
 void tree_barrier_using_posix_condition_variable(struct bar_type4* bar_name,int pid,int P){
 	unsigned int i,mask;
 	for(i=0,mask=1;(mask&pid)!=0;++i,mask<<=1)
@@ -393,7 +390,7 @@ void tree_barrier_using_posix_condition_variable(struct bar_type4* bar_name,int 
 		while(!bar_name->flag[pid][i]){
 			pthread_cond_wait(&bar_name->cvs[pid][i], &bar_name->cv_locks[pid][i]);
 			 asm("":::"memory");
-		} 
+		}
 		pthread_mutex_unlock(&bar_name->cv_locks[pid][i]);
 
 		bar_name->flag[pid][i]= 0;
@@ -405,7 +402,7 @@ void tree_barrier_using_posix_condition_variable(struct bar_type4* bar_name,int 
 		pthread_mutex_lock(&bar_name->cv_locks[pid+mask][i]);
 		pthread_cond_broadcast(&bar_name->cvs[pid+mask][i]);
 		pthread_mutex_unlock(&bar_name->cv_locks[pid+mask][i]);
-		
+
 
 		pthread_mutex_lock(&bar_name->cv_locks[pid][bar_name->MAX-1]);
 		while(!bar_name->flag[pid][bar_name->MAX-1]) {
@@ -422,14 +419,14 @@ void tree_barrier_using_posix_condition_variable(struct bar_type4* bar_name,int 
 		pthread_mutex_lock(&bar_name->cv_locks[pid-mask][bar_name->MAX-1]);
 		pthread_cond_broadcast(&bar_name->cvs[pid-mask][bar_name->MAX-1]);
 		pthread_mutex_unlock(&bar_name->cv_locks[pid-mask][bar_name->MAX-1]);
-		
+
 	}
 
 }
 
 /* struct for POSIX barrier interface (pthread_barrier_wait) */
 struct bar_type5 {
-	pthread_barrier_t barrier_from_p_thread;	
+	pthread_barrier_t barrier_from_p_thread;
 };
 
 /* init for POSIX barrier interface (pthread_barrier_wait) */
@@ -442,5 +439,5 @@ void posix_barrier_interface_init(struct bar_type5* bar_name1,int num_threads)
 /* POSIX barrier interface (pthread_barrier_wait) */
 void posix_barrier_interface(struct bar_type5* bar_name)
 {
-	pthread_barrier_wait(&bar_name->barrier_from_p_thread);	
+	pthread_barrier_wait(&bar_name->barrier_from_p_thread);
 }

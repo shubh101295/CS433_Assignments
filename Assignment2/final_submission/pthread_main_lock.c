@@ -10,7 +10,7 @@
 #include "sync_library.c"
 #define N 10000000
 
-//benchmark for all the other locks thatn array and bakery lock , just change the name of the function for acquire and release 
+//benchmark for all the other locks thatn array and bakery lock , just change the name of the function for acquire and release
 void* benchmark(void* param)
 {
     for (int i = 0; i < N; i++)
@@ -87,9 +87,9 @@ int main(int argc, char* argv[])
 
 	for(int i = 0; i < nthreads; i++)
 	{
-		pthread_create(&tid[i], &attr, benchmark, NULL);
+		// pthread_create(&tid[i], &attr, benchmark, NULL);
 		// pthread_create(&tid[i], &attr, benchmark_array_lock, NULL);
-		// pthread_create(&tid[i], &attr, benchmark_bakery_lock, &id[i]);
+		pthread_create(&tid[i], &attr, benchmark_bakery_lock, &id[i]);
 	}
 
 	for (int i=0; i< nthreads; i++) {
