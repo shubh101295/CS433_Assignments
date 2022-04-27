@@ -12,7 +12,7 @@ namespace cg = cooperative_groups;
 #define ITER_LIMIT 1000
 #define THREADS_PER_BLOCK 1024
 
-__managed__ float diff = 0;
+__managed__ float tree_diff = 0;
 __managed__ int done = 0;
 __managed__ int iter = 0;
 
@@ -38,18 +38,30 @@ __global__ void init_kernel (float *a, int n, int t, int span, curandState *stat
 
 __global__ void solver(float *a, int n, int x_tile, int y_tile)
 {
-    float local_diff = 0.0, temp;
+    float temp;
+    int tpb = blockDim.x * blockDim.y;
+    float local_tree_diff = 0.0;
+    int global_tid;
+    __shared__ float local_diff_arr[ THREADS_PER_BLOCK / 32];
     int x_id, y_id;
     int ij, ipj, ijm, imj, ijp;
     cg::grid_group grid = cg::this_grid();
     while (!done)
     {
-        local_diff = 0;
+        local_tree_diff = 0;
         x_id = blockIdx.x * blockDim.x + threadIdx.x;
         y_id = blockIdx.y * blockDim.y + threadIdx.y;
+        global_tid = x_id + y_id * blockDim.x * gridDim.x; // 1d indexing into a block.
+        // printf("%d %d %d\n", x_id, y_id, global_tid);
+
         if(x_id == 0 && y_id == 0)
         {
-            diff = 0;
+            tree_diff = 0;
+            for (int i = 0; i < THREADS_PER_BLOCK / 32; i++)
+            {
+                local_diff_arr[i] = 0.0;
+            }
+
         }
         grid.sync();
 
@@ -64,18 +76,39 @@ __global__ void solver(float *a, int n, int x_tile, int y_tile)
                 ijm = (i + 1) * (n + 2) + (j);
                 temp = a[ij];
                 a[ij] = 0.2 * (a[ijp] + a[imj] + a[ipj] + a[ijm] + a[ij]);
-                local_diff+=fabs(a[ij] - temp);
+                local_tree_diff+=fabs(a[ij] - temp);
                 // printf("[iter: %d] %d, %d, %d, %d, %d %f\n", iter, ij, ipj, imj, ijp, ijm, local_diff);
             }
         }
-        atomicAdd(&diff, local_diff);
+        unsigned mask = 0xffffffff;
+        for (int i = warpSize / 2; i > 0; i = i / 2) local_tree_diff += __shfl_down_sync(mask, local_tree_diff, i);
+        if (global_tid % warpSize == 0)
+        {
+            local_diff_arr[global_tid / warpSize] = local_tree_diff;
+        }
+        __syncthreads();
+        // if (global_tid == 0)
+        // {
+        //     for (int i = 0; i < THREADS_PER_BLOCK / 32; i++)
+        //     {
+        //         printf("%f ", local_diff_arr[i]);
+        //     }
+        //     printf("\n");
+        // }
+        if ((global_tid / ( tpb / 32) ) == 0) {
+            // printf("in global_id %d\n", global_tid);
+            local_tree_diff = local_diff_arr[global_tid];
+            for (int i = tpb / 64; i > 0; i = i / 2) local_tree_diff += __shfl_down_sync(mask, local_tree_diff, i);
+            if (global_tid == 0) atomicAdd(&tree_diff, local_tree_diff);
+        }
+
         if(x_id == 0 && y_id == 0)
         {
             iter++;
-            printf("[iter: %5d] diff: %6f, local: %6f\n", iter, diff/(n * n), local_diff);
+            // printf("[iter: %4d] local: %6f tree: %6f\n", iter, local_tree_diff, tree_diff / (n * n));
         }
         grid.sync();
-        if((diff / (n * n)) < TOL || (iter == ITER_LIMIT))
+        if((tree_diff / (n * n)) < TOL || (iter == ITER_LIMIT))
         {
             done = 1;
         }
@@ -110,9 +143,9 @@ int main (int argc, char *argv[])
     if(log_t_2 < 10) // less than THREADS_PER_BLOCK
     {
         int half = log_t_2 / 2;
-        num_threads_per_block_x = (1<<half);
+        left = log_t_2 - half;
+        num_threads_per_block_x = (1<<left);
         num_threads_per_block_y = (1<<half);
-        left = log_t_2 - half * 2;
     }
     else
     {
@@ -123,20 +156,19 @@ int main (int argc, char *argv[])
 
     int half = log_span_2 / 2;
     left = log_span_2 - half;
-    x_tile = (1<<left);
-    y_tile = (1<<half);
+    x_tile = (1<<half);
+    y_tile = (1<<left);
 
     num_thread_blocks_x = n / (x_tile * num_threads_per_block_x);
     num_thread_blocks_y = n / (y_tile * num_threads_per_block_y);
-
     assert(num_thread_blocks_x * num_threads_per_block_x * num_thread_blocks_y * num_threads_per_block_y == t);
     assert(x_tile * y_tile == total_span);
     assert(x_tile * num_threads_per_block_x * num_thread_blocks_x == n);
     assert(y_tile * num_threads_per_block_y * num_thread_blocks_y == n);
 
-    // printf("choosing gridDims: %d, %d\n", num_thread_blocks_x, num_thread_blocks_y);
-    // printf("choosing blockDims: %d, %d\n", num_threads_per_block_x, num_threads_per_block_y);
-    // printf("choosing tiles: %d, %d\n", x_tile, y_tile);
+    printf("choosing gridDims: %d, %d\n", num_thread_blocks_x, num_thread_blocks_y);
+    printf("choosing blockDims: %d, %d\n", num_threads_per_block_x, num_threads_per_block_y);
+    printf("choosing tiles: %d, %d\n", x_tile, y_tile);
 
 	cudaMallocManaged((void**)&a, sizeof(float) * (n + 2) * (n + 2));
 
