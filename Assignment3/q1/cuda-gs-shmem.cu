@@ -9,9 +9,9 @@
 namespace cg = cooperative_groups;
 
 #define TOL 1e-5
-#define ITER_LIMIT 1000
-#define TILE_X 32
-#define TILE_Y 32
+#define ITER_LIMIT 1
+#define TILE_X 16
+#define TILE_Y 16
 #define THREADS_PER_BLOCK 1024
 #define TPBX TILE_X
 #define TPBY TILE_Y
@@ -98,6 +98,11 @@ __global__ void solver(float *a, int n, int dim_span_x, int dim_span_y)
         if((diff / (n * n)) < TOL || (iter == ITER_LIMIT))
         {
             done = 1;
+            if(x_id == 0 && y_id == 0)
+            {
+                printf("[iter: %5d] diff: %6f, local: %6f\n", iter, diff/(n * n), local_diff);
+
+            }
         }
         grid.sync();
     }

@@ -105,12 +105,15 @@ __global__ void solver(float *a, int n, int x_tile, int y_tile)
         if(x_id == 0 && y_id == 0)
         {
             iter++;
-            // printf("[iter: %4d] local: %6f tree: %6f\n", iter, local_tree_diff, tree_diff / (n * n));
         }
         grid.sync();
         if((tree_diff / (n * n)) < TOL || (iter == ITER_LIMIT))
         {
             done = 1;
+            if(x_id == 0 && y_id == 0)
+            {
+                printf("[iter: %4d] local: %6f tree: %6f\n", iter, local_tree_diff, tree_diff / (n * n));
+            }
         }
         grid.sync();
     }

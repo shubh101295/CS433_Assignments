@@ -3,8 +3,10 @@ CUDACC = nvcc
 CFLAGS = -g -Wall -O3 -fopenmp
 CUDAFLAGS = -O3
 
-omp:
+gs_omp:
 	$(CC) omp_gauss-seidel_block_row.c $(CFLAGS) -o omp_gs
+mv_omp:
+	$(CC) matvec-cpu.c $(CFLAGS) -o omp_mv
 gs_basic:
 	$(CUDACC) cuda-gs-basic.cu $(CUDAFLAGS) -o gs_basic
 mv_basic:
