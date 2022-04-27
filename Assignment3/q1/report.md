@@ -20,3 +20,15 @@
 - The maxmimum n we run it for is 8192.
 - We get the best performance from choosing 8192 threads.
 - here is a table for the results
+
+| Threads | Time    |
+|---------|---------|
+| 256   | 200673 |
+| 512    | 94093  |
+| 1024    | 60217    |
+| 2048    | 26911    |
+| 4096   | 17200    |
+| 8192   | 8698    |
+
+- for the same value, without using Shared memory, we get a time of 1694448 microseconds, which is a lot slower.
+- The best performing OMP program timed around 292212 microsenconds, with the same n and 16 CPU threads.
